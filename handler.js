@@ -1,5 +1,7 @@
 'use strict';
 
+const axios = require('axios');
+
 module.exports.hello = async (event, context) => {
   return {
     statusCode: 200,
