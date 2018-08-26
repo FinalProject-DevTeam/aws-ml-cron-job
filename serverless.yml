@@ -57,6 +57,10 @@ provider:
 functions:
   hello:
     handler: handler.hello
+    events:
+      # every minute
+      - schedule: cron(0 0/1 * 1/1 * ? *)
+      - enabled: true
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
