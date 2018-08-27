@@ -3,12 +3,23 @@
 const axios = require('axios');
 
 let date = new Date();
-
 let today = `${date.getDate()}${date.getMonth()}${date.getFullYear()}`;
 
 let getRestaurantIds = axios.get('http://localhost:3000/authentication')
-
 let getTransactions = axios.get('http://localhost:3000/populate')
+let uploadCustomersDataToS3 = (uid) => {
+  axios.get('http://localhost:3000/customer/listbydate', {
+    headers: {
+      uid: uid,
+    }
+  })
+  .then(({ data }) => {
+    let arrData = data.data.map((datum) => {
+      return [ datum.genderML , Number(datum.birthYear), datum.occupationML ];
+    })
+    console.log(arrData);
+  })
+}
 
 // let helloFromTimeout = (val) => {
 //   console.log(val);
@@ -50,12 +61,27 @@ module.exports.hello = async (event, context, callback) => {
       let restaurantIds = responses[0].data.data.map(datum => {
         return datum.uid;
       })
+
       let transactions = []
       responses[1].data.map((datum) => {
         return datum.itemsOrderedML.map((item) => {
           return transactions.push([datum.customer.genderML, +(datum.customer.birthYear), datum.customer.occupationML, item]);
         })
       })
-      console.log(transactions);
+
+      let customersDataPromises = restaurantIds.map(restaurantId => {
+        return getCustomersData(restaurantId);
+      })
+
+      // uploadCustomersDataToS3(re)
+
+      // Promise.all(customersDataPromises)
+      //   .then((responses) => {
+      //     responses.map(datum => {
+      //       datum.data.data.map((datum) => {
+      //         console.log([ datum.genderML , Number(datum.birthYear), datum.occupationML ]);
+      //       })
+      //     })
+      //   })
     })
 };
