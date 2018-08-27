@@ -46,6 +46,8 @@ module.exports.hello = async (event, context, callback) => {
       let restaurantIds = responses[0].data.data.map(datum => {
         return datum.uid;
       })
-      let transactions = responses[0]
+      let transactions = responses[1].data.data
+      // console.log(restaurantIds);
+      console.log(transactions);
     })
 };
