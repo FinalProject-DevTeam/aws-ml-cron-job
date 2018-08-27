@@ -2,9 +2,13 @@
 
 const axios = require('axios');
 
+let date = new Date();
+
+let today = `${date.getDate()}${date.getMonth()}${date.getFullYear()}`;
+
 let getRestaurantIds = axios.get('http://localhost:3000/authentication')
 
-let getTransactions = axios.get('http://localhost:3000/transaction/alltransactions')
+let getTransactions = axios.get('http://localhost:3000/populate')
 
 // let helloFromTimeout = (val) => {
 //   console.log(val);
@@ -46,8 +50,12 @@ module.exports.hello = async (event, context, callback) => {
       let restaurantIds = responses[0].data.data.map(datum => {
         return datum.uid;
       })
-      let transactions = responses[1].data.data
-      // console.log(restaurantIds);
+      let transactions = []
+      responses[1].data.map((datum) => {
+        return datum.itemsOrderedML.map((item) => {
+          return transactions.push([datum.customer.genderML, +(datum.customer.birthYear), datum.customer.occupationML, item]);
+        })
+      })
       console.log(transactions);
     })
 };
