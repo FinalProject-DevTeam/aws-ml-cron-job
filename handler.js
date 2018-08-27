@@ -56,7 +56,7 @@ let addDatasource = (payload) => (
 // console.log('setelah timeout => ', p);
 
 module.exports.hello = (event, context, callback) => {
-  // axios.post('http://localhost:3000/aws/model')
+  axios.post('http://localhost:3000/aws/model')
 
   Promise.all([getRestaurantIds, getTransactions])
     .then(responses => {
@@ -91,15 +91,30 @@ module.exports.hello = (event, context, callback) => {
         id: '',
       }
 
-    let modelStatusInterval = setInterval(function () {
-      axios.get(`http://localhost:3000/aws/model/${today}`)
+    // let modelStatusInterval = setInterval(function () {
+    //   axios.get(`http://localhost:3000/aws/model/${today}`)
+    //     .then((response) => {
+    //       if (response.data === 'COMPLETED') {
+    //         clearInterval(modelStatusInterval)
+    //         console.log(response.data);
+    //         return ;
+    //       }
+    //     })
+    // }, 1000)
+
+    let modelStatusInterval = setTimeout(function run() {
+      axios.get(`http://localhost:3000/aws/model/test`)
         .then((response) => {
           if (response.data === 'COMPLETED') {
+            clearTimeout(modelStatusInterval)
             console.log(response.data);
-            clearInterval(modelStatusInterval)
+            return false;
+          } else {
+            console.log(response.data);
+            setTimeout(run, 1000);
           }
         })
-    }, 1000)
+    }, 1000);
 
       // uploadToS3(payload)
       //   .then((response) => {
