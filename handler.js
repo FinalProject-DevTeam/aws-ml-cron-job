@@ -56,7 +56,6 @@ let addDatasource = (payload) => (
 // console.log('setelah timeout => ', p);
 
 module.exports.hello = (event, context, callback) => {
-  axios.post('http://localhost:3000/aws/model')
 
   Promise.all([getRestaurantIds, getTransactions])
     .then(responses => {
@@ -91,43 +90,29 @@ module.exports.hello = (event, context, callback) => {
         id: '',
       }
 
-    // let modelStatusInterval = setInterval(function () {
-    //   axios.get(`http://localhost:3000/aws/model/${today}`)
-    //     .then((response) => {
-    //       if (response.data === 'COMPLETED') {
-    //         clearInterval(modelStatusInterval)
-    //         console.log(response.data);
-    //         return ;
-    //       }
-    //     })
-    // }, 1000)
-
-    let modelStatusInterval = setTimeout(function run() {
-      axios.get(`http://localhost:3000/aws/model/test`)
+      uploadToS3(payload)
         .then((response) => {
-          if (response.data === 'COMPLETED') {
-            clearTimeout(modelStatusInterval)
-            console.log(response.data);
-            return false;
-          } else {
-            console.log(response.data);
-            setTimeout(run, 1000);
+          let transactionsDatasourcePayload = {
+            dataName: 'transactions-data',
+            folderName: 'transactionsData'
           }
+          addDatasource(transactionsDatasourcePayload)
+            .then(response => {
+              let transactionsDatasourceStatusInterval = setTimeout(function run() {
+                axios.get(`http://localhost:3000/aws/datasource/test1`)
+                  .then(response => {
+                    if (response.data === 'COMPLETED') {
+                      axios.post('http://localhost:3000/aws/model')
+                      console.log('Transactions => ', response.data);
+                      clearTimeout(transactionsDatasourceStatusInterval)
+                    } else {
+                      console.log('Transactions => ', response.data);
+                      setTimeout(run, 1000);
+                    }
+                  })
+              }, 1000)
+            })
         })
-    }, 1000);
-
-      // uploadToS3(payload)
-      //   .then((response) => {
-      //     // console.log(response);
-      //     let payload = {
-      //       dataName: 'transactions-data',
-      //       folderName: 'transactionsData'
-      //     }
-      //     addDatasource(payload)
-      //       .then(response => {
-      //
-      //       })
-      //   })
 
 
 
