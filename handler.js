@@ -3,7 +3,7 @@
 const axios = require('axios');
 
 let date = new Date();
-let today = `${date.getDate()}${date.getMonth()}${date.getFullYear()}test6`;
+let today = `${date.getDate()}${date.getMonth()}${date.getFullYear()}test16`;
 
 let getRestaurantIds = axios.get('http://localhost:3000/authentication')
 let getTransactions = axios.get('http://localhost:3000/populate')
@@ -80,10 +80,10 @@ module.exports.hello = (event, context, callback) => {
                       clearTimeout(transactionsDatasourceStatusInterval)
                     } else {
                       console.log('Transactions => ', response.data);
-                      setTimeout(run, 1000);
+                      setTimeout(run, 5000);
                     }
                   })
-              }, 1000)
+              }, 5000)
             })
         })
 
@@ -121,7 +121,7 @@ module.exports.hello = (event, context, callback) => {
             }
             uploadToS3Promises.push(uploadToS3(customersDataPayload));
           }
-          // console.log(uploadToS3Promises);
+          console.log(uploadToS3Promises);
           Promise.all(uploadToS3Promises)
           .then(responses => {
             // console.log(responses);
@@ -135,7 +135,7 @@ module.exports.hello = (event, context, callback) => {
               }
               addDatasourcePromises.push(addDatasource(customersDatasourcePayload))
             }
-            // console.log(addDatasourcePromises);
+            console.log(addDatasourcePromises);
             Promise.all(addDatasourcePromises)
             .then(responses => {
               let datasourceStatusPromises = restaurantIds.map(restaurantId => {
@@ -152,7 +152,7 @@ module.exports.hello = (event, context, callback) => {
                               axios.get(`http://localhost:3000/aws/model/${today}`)
                               .then(response => {
                                 if (response.data === 'COMPLETED') {
-                                  let createNewBacthPredictionPromises = restaurantIds.map(restaurantId => {
+                                  let createNewBatchPredictionPromises = restaurantIds.map(restaurantId => {
                                     return createNewBatchPrediction(restaurantId);
                                   })
                                   Promise.all(createNewBatchPredictionPromises)
@@ -160,85 +160,96 @@ module.exports.hello = (event, context, callback) => {
                                     let batchPredictionStatusPromises = restaurantIds.map(restaurantId => {
                                       return getBatchPredictionStatus(restaurantId);
                                     })
-                                    let batchPredictionsSatusInterval = setTimeout(function run() {
-                                      Promise.all(batchPredictionStatusPromises)
-                                      .then(responses => {
-                                        let batchPredictionsStatus = responses.filter(response => response.data === 'COMPLETED')
-                                        if (batchPredictionsStatus.length === restaurantIds.length) {
-                                          let getPredictionPromises = restaurantIds.map(restaurantId => {
-                                            return getPrediction(restaurantId);
-                                          })
-                                          Promise.all(getPredictionPromises)
-                                          .then(responses => {
-                                            let predictionsData = responses.map(response => {
-                                              return response.data;
-                                            })
-                                            for (let j = 0; j < predictionsData.length; j++) {
-                                              let resultArr = [];
-                                              for(let i = 1; i < predictionsData[j].length; i++) {
-                                                let index = 0;
-                                                let maxNumber = 0;
-                                                let food = '';
-                                                for(let k = 0; k < data[i].length; k++) {
-                                                  if(data[i][k] > maxNumber) {
-                                                    maxNumber = data[i][k];
-                                                    index = k;
-                                                    food = data[0][k];
-                                                  }
-                                                }
-                                                resultArr.push(food)
-                                              }
-
-                                              axios.get(`http://localhost:3000/customer/listbydate`, {
-                                                headers: {
-                                                  uid: restaurantIds[j],
-                                                }
-                                              }).then(customer => {
-                                                let dataCustomers = customer.data.data;
-                                                for (let i = 0; i < dataCustomers.length; i++) {
-                                                  let findDot = resultArr[i].indexOf('.');
-                                                  if (findDot === -1) {
-                                                    dataCustomers[i].foodfav = resultArr[i];
-                                                  }
-                                                  else {
-                                                    dataCustomers[i].foodfav = resultArr[i].split('.').join(' ');
-                                                  }
-                                                }
-                                                // console.log(dataCustomers)
-                                                dataCustomers.map(customer => {
-                                                  axios.post(`http://localhost:3000/customer/setdata/${customer.id}`, customer)
-                                                  .then(result => {
-                                                    console.log('berhasil', '=>', result.data)
-                                                  })
-                                                })
-                                              })
-                                            }
-                                          })
-                                          clearTimeout(batchPredictionsSatusInterval)
-                                        } else {
-                                          console.log('BatchPrediction => ', batchPredictionsStatus.data);
-                                          setTimeout(run, 1000)
-                                        }
-                                      })
-                                    }, 1000)
+                                    // let batchPredictionsStatusInterval = setTimeout(function run() {
+                                    //   Promise.all(batchPredictionStatusPromises)
+                                    //   .then(responses => {
+                                    //     console.log(responses);
+                                    //     let batchPredictionsStatus = responses.filter(response => response.data === 'COMPLETED')
+                                    //     if (batchPredictionsStatus.length === restaurantIds.length) {
+                                    //       let getPredictionPromises = restaurantIds.map(restaurantId => {
+                                    //         return getPrediction(restaurantId);
+                                    //       })
+                                    //       Promise.all(getPredictionPromises)
+                                    //       .then(responses => {
+                                    //         let predictionsData = responses.map(response => {
+                                    //           return response.data;
+                                    //         })
+                                    //         for (let j = 0; j < predictionsData.length; j++) {
+                                    //           let resultArr = [];
+                                    //           let currentPrediction = predictionsData[j]
+                                    //           for(let i = 1; i < currentPrediction.length; i++) {
+                                    //             let index = 0;
+                                    //             let maxNumber = 0;
+                                    //             let food = '';
+                                    //             for(let k = 0; k < currentPrediction[i].length; k++) {
+                                    //               if(currentPrediction[i][k] > maxNumber) {
+                                    //                 maxNumber = currentPrediction[i][k];
+                                    //                 index = k;
+                                    //                 food = currentPrediction[0][k];
+                                    //               }
+                                    //             }
+                                    //             resultArr.push(food)
+                                    //           }
+                                    //
+                                    //           axios.get(`http://localhost:3000/customer/listbydate`, {
+                                    //             headers: {
+                                    //               uid: restaurantIds[j],
+                                    //             }
+                                    //           }).then(customer => {
+                                    //             let dataCustomers = customer.data.data;
+                                    //             for (let i = 0; i < dataCustomers.length; i++) {
+                                    //               let findDot = resultArr[i].indexOf('.');
+                                    //               if (findDot === -1) {
+                                    //                 dataCustomers[i].foodfav = resultArr[i];
+                                    //               }
+                                    //               else {
+                                    //                 dataCustomers[i].foodfav = resultArr[i].split('.').join(' ');
+                                    //               }
+                                    //             }
+                                    //
+                                    //             dataCustomers.map(customer => {
+                                    //               axios.post(`http://localhost:3000/customer/setdata/${customer.id}`, customer)
+                                    //               .then(result => {
+                                    //                 console.log('berhasil', '=>', result.data)
+                                    //               })
+                                    //             })
+                                    //           })
+                                    //         }
+                                    //       })
+                                    //       for (let v = 0; v < batchPredictionsStatus.length; v++) {
+                                    //         console.log('prediction => ', batchPredictionsStatus[v].data);
+                                    //       }
+                                    //       clearTimeout(batchPredictionsStatusInterval)
+                                    //     } else {
+                                    //       for (let y = 0; y < batchPredictionsStatus.length; y++) {
+                                    //         console.log('prediction => ', batchPredictionsStatus[y].data);
+                                    //       }
+                                    //       setTimeout(run, 5000)
+                                    //     }
+                                    //   })
+                                    // }, 5000)
                                   })
                                   console.log('model => ', response.data);
                                   clearTimeout(modelStatusInterval)
                                 } else {
                                   console.log('model => ', response.data);
-                                  setTimeout(run, 1000)
+                                  setTimeout(run, 5000)
                                 }
                               })
-                            }, 1000)
+                            }, 5000)
                           })
-                        console.log('customers => ', customersDataSourceStatus);
+                        for (let m = 0; m < customersDataSourceStatus.length; m++) {
+                          console.log('customers => ', customersDataSourceStatus[m].data);
+                        }
                         clearTimeout(customersDataStatusInterval)
                       } else {
-                        console.log('customers => ', customersDataSourceStatus);
-                        setTimeout(run, 1000)
+                        for (let m = 0; m < customersDataSourceStatus.length; m++) {
+                          console.log('customers => ', customersDataSourceStatus[m].data);
+                        }
+                        setTimeout(run, 5000)
                       }
                   })
-              }, 1000)
+              }, 5000)
             })
           })
         })
